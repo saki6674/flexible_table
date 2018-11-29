@@ -1,0 +1,161 @@
+/*
+color-palette
+#00796B
+    blue-green
+#B2DFDB
+    light-green
+#757575
+    gray
+*/
+
+/*全体共通スタイル*/
+body{
+    background-color: #B2DFDB;
+    color: #00796B;
+    text-align:center;
+    padding-top:20px;
+}
+
+/*ボタン*/
+.submit_btn{
+    border: 0px;
+    width:180px;
+    height:37px;
+    background: url(./material/submit.jpg) left top no-repeat;
+    text-align: right;
+    text-indent: -9999px;
+}
+.logout_btn{
+    border: 0px;
+    width:180px;
+    height:37px;
+    background: url(./material/logout.jpg) left top no-repeat;
+    text-align: right;
+    text-indent: -9999px;
+}
+.contact_btn{
+    border: 0px;
+    width:180px;
+    height:37px;
+    background: url(./material/contact.jpg) left top no-repeat;
+    text-align: right;
+    text-indent: -9999px;
+}
+.back_btn{
+    border: 0px;
+    width:180px;
+    height:37px;
+    background: url(./material/back.jpg) left top no-repeat;
+    text-align: right;
+    text-indent: -9999px;
+}
+.login_btn{
+    border: 0px;
+    width:180px;
+    height:37px;
+    background: url(./material/login.jpg) left top no-repeat;
+    text-align: right;
+    text-indent: -9999px;
+}
+.signup_btn{
+    border: 0px;
+    width:180px;
+    height:37px;
+    background: url(./material/signup.jpg) left top no-repeat;
+    text-align: right;
+    text-indent: -9999px;
+}
+.show_btn{
+    border: 0px;
+    width:180px;
+    height:37px;
+    background: url(./material/show.jpg) left top no-repeat;
+    text-align: right;
+    text-indent: -9999px;
+}
+.add_btn{
+    border: 0px;
+    width:180px;
+    height:37px;
+    background: url(./material/add.jpg) left top no-repeat;
+    text-align: right;
+    text-indent: -9999px;
+}
+.edit_btn{
+    border: 0px;
+    width:180px;
+    height:37px;
+    background: url(./material/edit.jpg) left top no-repeat;
+    text-align: right;
+    text-indent: -9999px;
+}
+.delete_btn{
+    border: 0px;
+    width:180px;
+    height:37px;
+    background: url(./material/delete.jpg) left top no-repeat;
+    text-align: right;
+    text-indent: -9999px;
+}
+
+.small_btn{
+    background-size: 100%;
+    width:90px;
+    height:19px;
+}
+
+/*テーブル*/
+.table_center{
+    margin-left:auto;
+    margin-right:auto;
+}
+.table_center td{   
+    vertical-align:top;
+}
+
+/*ユーザーページ*/
+img{
+    max-height: 480px;
+    max-width:480px;
+}
+a { 
+    width: 100%; /* 横幅 */
+    padding:10px; /* a要素内の余白 */
+}
+
+.overall{
+    text-align:right;
+}
+th{
+    text-align:center;
+}
+.overall td{
+    vertical-align:top;
+}
+.none{
+    text-align:left;
+}
+
+.solid tr:nth-child(5n+3) {
+    border-bottom: 3px solid black;
+}
+.solid th{
+    border-bottom: 3px solid black;
+}
+.solid tr:nth-child(2n) {
+    background-color:#D5EFED;
+}
+.solid tr:nth-child(2n+1) {
+    background: color #8fcec9;
+}
+
+.solid{
+    border-collapse:collapse;
+}
+.solid td{
+    text-align:left;
+    max-width: 480px;
+}
+.solid th{
+    max-width: 480px;
+}
