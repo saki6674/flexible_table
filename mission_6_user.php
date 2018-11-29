@@ -15,6 +15,11 @@ $user = 'ユーザー名';
 $password = 'パスワード';
 $pdo = new PDO($dsn,$user,$password);
 
+/*メモ
+・テーブル「personal_ユーザー名」のID=99999には、カラムの形式が格納されている。(textとtextareaを分類する為に使用)
+*/
+
+
 //〜アカウント〜
 //ログアウト
 if(isset($_POST['logout'])){
@@ -50,7 +55,7 @@ if(isset($_POST['add_cat'])){
     $pdo->query("update $ID set $name='$type' where ID=99999");
 }
 
-//カテゴリリスト作成
+//表示カテゴリリスト作成
 $cats=$pdo->query("show columns from $ID");
 $cats=$cats->fetchAll();
 $shows=$_POST['show_cate'];
@@ -58,6 +63,9 @@ if($shows==NULL){   //表示カテゴリがなければ全て表示
     foreach($cats as $value){
         $shows[]=$value[0];
     }
+}
+if(!in_array("ID",$shows)){ //IDが入ってなければ追加
+    array_unshift($shows,"ID");
 }
 
 //〜レコード操作〜
@@ -106,12 +114,12 @@ if($del_ID!=NULL){
     $pdo->query($sql);
     $shift_ID=$del_ID+1;
     while($shift_ID>1){
-        $sql=$pdo->query("select ID from $ID where ID=".$i);
+        $sql=$pdo->query("select ID from $ID where ID=".$shift_ID);
         $sql=$sql->fetch();
         if($sql==NULL){
             break;
         }
-        $sql="update $ID set ID=".--$i." where ID=".++$i;
+        $sql="update $ID set ID=".--$shift_ID." where ID=".++$shift_ID;
         $pdo->query($sql);
         $shift_ID++;
     }
@@ -125,7 +133,7 @@ foreach($_POST as $key => $value){
 }
 //編集フォームの表示flag
 if($edit_ID!=NULL){
-    $edit_exe=true;
+    $edit_exist=true;
 }
 //編集データの受け取り、更新
 if(isset($_POST['edit_data'])){
@@ -163,7 +171,6 @@ if(isset($_POST['edit_data'])){
     $pdo->query($sql);
 }
 
-
 //レコード取得
 if(empty($_SESSION['order'])){
     $_SESSION['order']="ID";
@@ -172,68 +179,52 @@ $order="order by ".$_SESSION['order'];
 $cells=$pdo->query("select * from $ID ".$order);
 $cells=$cells->fetchAll();
 
-
-
-//checker
-/*
-echo "<hr>cats<br>";
-var_dump($cats);
-echo "<hr>shows<br>";
-var_dump($shows);
-echo "<hr>cells<br>";
-var_dump($cells);
-echo "<hr>";
-*/
 ?>
 
 
 <table class="overall">
-<tr style="height:3em;"><td><?php echo $_SESSION['ID']."さん"; ?></td><td style="wIDth:2em;"></td><td>
+<tr style="height:3em;"><td><?php echo $_SESSION['ID']."さん"; ?></td><td style="width:2em;"></td><td>
 <!--ログアウト,コンタクトボタン-->
-<form method="post" enctype="multipart/form-data">
+<form method="post">
     <input type="submit" name="logout" value="" class="logout_btn" >
     <input type="submit" name="contact" value="" class="contact_btn">
 </form>
 </td></tr>
 <tr><td>
 <!--表示項目選択欄　チェックボックス+submit(決定)-->
-<form method="post" enctype="multipart/form-data">
+<form method="post">
 <table class="none">
 <tr><td></td><td><b>表示カテゴリ</b></td></tr>
 <?php
 foreach($cats as $key => $value){
-    if(is_int($key)){
-        if($shows!=NULL){
-            if($value[0]=="ID"){
-                echo "<tr>";
-                echo "<td>";
-            }else{
-                echo "<tr>";
-                echo "<td><input type='checkbox' name='show_cate[]' value='".$value[0]."'";
-                if(in_array($value[0],$shows)){
-                    echo "checked>";
-                }else{
-                    echo ">";
-                }
+    if(is_int($key)){   //配列からカテゴリ名を取り出して
+        //check_box作成
+        if($value[0]=="ID"){    //IDならboxなし
+            echo "<tr><td>";
+        }else{  //ID以外はbox作成
+            echo "<tr><td><input type='checkbox' name='show_cate[]' value='".$value[0]."'";
+            if(in_array($value[0],$shows)){ //表示しているカテゴリはcheck
+                echo "checked>";
+            }else{  //非表示のカテゴリはcheckしない
+                echo ">";
             }
         }
-        echo "</td>";
-        echo "<td>".$value[0];
+        echo "</td><td>".$value[0];
         if($key=="ID"){
             echo "※必須";
         }
-        echo "</td>";
-        echo "</tr>";
+        echo "</td></tr>";
     }
 }
 ?>
 </table>
 <input type="submit" value="" class="small_btn show_btn"> 
 </form>
+<hr>
 <!--カテゴリ追加-->
 <table class="none">
 <tr><td><b>カテゴリ追加</b></td></tr>
-<form method="post" enctype="multipart/form-data">
+<form method="post">
 <tr><td>名前　<input type="text" name="add_cat_name" required></td></tr>
 <tr><td>タイプ</td></tr>
 <tr><td><input type="radio" name="add_cat_type" value="text" checked>テキスト</td></tr>
@@ -251,10 +242,12 @@ foreach($cats as $key => $value){
 
 <table class="solid" border=2;>
 <tr>
-<?php   //カラム名
+<?php   //カラム名表示
 echo "<th>操作</th>";
 foreach($shows as $value){
+    //カテゴリ名にカテゴリ操作ページへのリンクを設定
     echo "<th><a href='mission_6_category.php?category=$value'>$value";
+    //sortされてるカテゴリはsort順表示
     if(preg_match("/$value/",$order)){
         if(preg_match('/asc/',$order)){
             echo " ▲";
@@ -276,22 +269,19 @@ foreach($shows as $value){
 <?php   //新規登録
 foreach($shows as $value){
     echo "<th>";
-    //ID=99999のカラム名$valueを取得
+    //99999行に格納されている形式のリストを取得
     $type=$pdo->query("select $value from $ID where ID=99999");
     $type=$type->fetch();
-    if($type[0]=="image"){
+    if($type[0]=="image"){  //画像の入力フォーム
         echo "<input type='file' name='$value'accept='image/*'>";
-    }elseif($value!="ID"){
-        //ID=99999のカラム名$valueを取得
-        $type=$pdo->query("select $value from $ID where ID=99999");
-        $type=$type->fetch();
+    }elseif($value!="ID"){  //画像とID以外の入力フォーム
         //それぞれの$valueごとに<input>文を出力
         if($type[0]=="textarea"){
             echo "<textarea name='$value' rows='4' cols='40'></textarea>";
         }else{
             echo "<input type='".$type[0]."' name='$value'>";
         }
-    }else{
+    }else{  //IDの送信用のhiddenフォーム
         $cnt=count($cells);
         echo "<input type='hidden' value='$cnt' name='$value'readonly>";
         echo $cnt;
@@ -301,8 +291,9 @@ foreach($shows as $value){
 ?>
 </tr>
 </form>
+
 <?php   //編集
-if($edit_exe==true):
+if($edit_exist==true):
 ?>
 
 <form method="post" enctype="multipart/form-data">
@@ -311,24 +302,24 @@ if($edit_exe==true):
 <?php   //編集
 foreach($shows as $value){
     echo "<td>";
-    $val=$pdo->query("select $value from $ID where ID=$edit_ID");
-    $val=$val->fetch();
-    //ID=99999のカラム名$typeを取得
+    //変更前の値を取得
+    $former_value=$pdo->query("select $value from $ID where ID=$edit_ID");
+    $former_value=$former_value->fetch();
+    //99999行に格納されている形式のリストを取得
     $type=$pdo->query("select $value from $ID where ID=99999");
     $type=$type->fetch();
-    if($type[0]=="image"){
-        echo "<input type='file' name='$value' accept='image/*' value='".$val[0]."'><br>";
+    //編集フォームの作成
+    if($type[0]=="image"){  //形式が画像の場合
+        echo "<input type='file' name='$value' accept='image/*' value='".$former_value[0]."'><br>";
         echo "<input type='checkbox' name='$value' value='delete'>画像を削除";
         echo "<br>※未選択の場合、元の画像が維持されます。";
-    }elseif($value!="ID"){
-        //type変更
-       //それぞれの$valueごとに<input>文を出力
+    }elseif($value!="ID"){  //画像でもIDでもない場合
        if($type[0]=="textarea"){
-           echo "<textarea name='$value' rows='4' cols='40'>".$val[0]."</textarea>";
+           echo "<textarea name='$value' rows='4' cols='40'>".$former_value[0]."</textarea>";
        }else{
-           echo "<input type='".$type[0]."' name='$value' value='".$val[0]."'>";
+           echo "<input type='".$type[0]."' name='$value' value='".$former_value[0]."'>";
        }
-    }else{
+    }else{  //IDの場合、送信用のhiddenフォームを作成
         echo "$edit_ID";
         echo "<input type='hidden' value='$edit_ID' name='$value'readonly>";
     }
@@ -340,34 +331,36 @@ foreach($shows as $value){
 <?php
 endif;
 ?>
-<?php   //レコード
+<?php   //レコード一覧
 foreach($cells as $value){
     if($value['ID']<1000){
+        //編集削除ボタン
         echo "<tr><td><form method='post'><input type='submit' value='' class='small_btn edit_btn' name='edit_".$value['ID']."'><br><input type='submit' value='' class='small_btn delete_btn' name='delete_".$value['ID']."'></form></td>";
         foreach($shows as $cat){
-            //typeの取得 $type[0]がタイプ
+            //99999行に格納されている形式のリストを取得
             $type=$pdo->query("select $cat from $ID where ID=99999");
             $type=$type->fetch();
-            if($type[0]=="image"){
+            //各セルを表示
+            if($type[0]=="image"){  //画像の場合
                 if($value[$cat]!="./upfiles/"){
                     echo "<td><img src=".$value[$cat]."></td>";
                 }else{
                     echo "<td></td>";
                 }
-            }elseif($type[0]=="datetime-local"){
+            }elseif($type[0]=="datetime-local"){    //日付の場合
                 $datetime=explode("T",$value[$cat]);
                 echo "<td>";
                 foreach($datetime as $v){
                     echo $v." ";
                 }
                 echo "</td>";
-            }elseif($type[0]=="textarea"){
+            }elseif($type[0]=="textarea"){  //テキストエリアの場合
                 echo "<td>";
                 $text=$value[$cat];
                 $text=preg_replace("/\n/","<br>",$text);
                 echo $text;
                 echo "</td>";
-            }else{
+            }else{  //その他
                 echo  "<td>".$value[$cat]."</td>";
             }
         }
