@@ -15,7 +15,7 @@ $user = 'ユーザー名';
 $password = 'パスワード';
 $pdo = new PDO($dsn,$user,$password);
 
-//アカウント
+//〜アカウント〜
 //ログアウト
 if(isset($_POST['logout'])){
      session_start(array('cookie_lifetime' => 86400));
@@ -29,7 +29,7 @@ if(!empty($_SESSION['ID'])){
     $ID='personal_'.$_SESSION['ID'];
 }
 
-//ページ遷移
+//〜ページ遷移〜
 //ログアウト状態ならログインページへ
 if($ID== NULL){
     header("Location:mission_6_login.php");
@@ -40,7 +40,7 @@ if(isset($_POST['contact'])){
     header("Location:mission_6_contact.php");
 }
 
-//カテゴリ
+//〜カテゴリ〜
 //カテゴリ追加
 if(isset($_POST['add_cat'])){
     $name=$_POST['add_cat_name'];
@@ -60,6 +60,7 @@ if($shows==NULL){   //表示カテゴリがなければ全て表示
     }
 }
 
+//〜レコード操作〜
 //新規登録
 if(isset($_POST['new_row'])){
     $sql="insert into $ID (";
@@ -93,26 +94,26 @@ if(isset($_POST['new_row'])){
 }
 
 //削除 
+//削除するIDの取得
 foreach($_POST as $key => $value){
     if(preg_match("/delete_[0-9]+$/",$key)){
         $del_ID=ltrim($key,"delete_");
     }
 }
+//削除SQL
 if($del_ID!=NULL){
     $sql="delete from $ID where ID=$del_ID";
     $pdo->query($sql);
-    $i=$del_ID+1;
-    if($i>=2){
-        while($i>1){
-            $sql=$pdo->query("select ID from $ID where ID=".$i);
-            $sql=$sql->fetch();
-            if($sql==NULL){
-                break;
-            }
-            $sql="update $ID set ID=".--$i." where ID=".++$i;
-            $pdo->query($sql);
-            $i++;
+    $shift_ID=$del_ID+1;
+    while($shift_ID>1){
+        $sql=$pdo->query("select ID from $ID where ID=".$i);
+        $sql=$sql->fetch();
+        if($sql==NULL){
+            break;
         }
+        $sql="update $ID set ID=".--$i." where ID=".++$i;
+        $pdo->query($sql);
+        $shift_ID++;
     }
 }
 
@@ -124,20 +125,18 @@ foreach($_POST as $key => $value){
 }
 //編集フォームの表示flag
 if($edit_ID!=NULL){
-    //echo "$edit_ID の企業の編集フォームを作成"; //checker
     $edit_exe=true;
 }
 //編集データの受け取り、更新
 if(isset($_POST['edit_data'])){
-    //echo $_POST['ID']."の企業情報を編集";   //checker
     $sql="update $ID set ";
     //ループ　A='A',B='B'
     foreach($shows as $value){
         //ID=99999のカラム名$valueを取得
-        $type=$pdo->query("select $value from $ID where ID=99999");
+        $type=$pdo->query("select $value from $ID where ID=99999"); //形式の取得
         $type=$type->fetch();
-        if($type[0]=="image"){
-            if($_POST["$value"]!="delete"){
+        if($type[0]=="image"){  //画像の場合
+            if($_POST["$value"]!="delete"){ //画像を削除しない場合
                 if($_FILES["$value"]['error']==0){
                     //画像登録
                     $image_array=$_FILES["$value"];
@@ -146,17 +145,16 @@ if(isset($_POST['edit_data'])){
                     $path="./upfiles/$name";
                     $check=move_uploaded_file($tmp_name,$path);
                     $file_name="./upfiles/".$ID.time().".jpg";
-                    echo "check:".$check;
                     if($check==1){
                         rename($path,$file_name);
                         $path=$file_name;
                     }
                     $sql.="$value='".$path."',";
                 }
-            }else{
+            }else{  //画像を削除する場合
                 $sql.="$value='',";
             }
-        }elseif(!($value=="edit_data" || $value=="ID")){
+        }elseif(!($value=="edit_data" || $value=="ID")){    //画像でない場合
             $sql.=$value."='".$_POST["$value"]."',";
         }
     }
