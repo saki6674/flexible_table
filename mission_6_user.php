@@ -15,6 +15,7 @@ $user = 'ユーザー名';
 $password = 'パスワード';
 $pdo = new PDO($dsn,$user,$password);
 
+//アカウント
 //ログアウト
 if(isset($_POST['logout'])){
      session_start(array('cookie_lifetime' => 86400));
@@ -28,15 +29,18 @@ if(!empty($_SESSION['ID'])){
     $ID='personal_'.$_SESSION['ID'];
 }
 
+//ページ遷移
 //ログアウト状態ならログインページへ
 if($ID== NULL){
     header("Location:mission_6_login.php");
 }
+
 //問い合わせは問い合わせページへ
 if(isset($_POST['contact'])){
     header("Location:mission_6_contact.php");
 }
 
+//カテゴリ
 //カテゴリ追加
 if(isset($_POST['add_cat'])){
     $name=$_POST['add_cat_name'];
@@ -46,54 +50,45 @@ if(isset($_POST['add_cat'])){
     $pdo->query("update $ID set $name='$type' where ID=99999");
 }
 
-//カテゴリ設定
+//カテゴリリスト作成
 $cats=$pdo->query("show columns from $ID");
 $cats=$cats->fetchAll();
 $shows=$_POST['show_cate'];
-if($shows==NULL){
-    //echo"error_shows";//checker
+if($shows==NULL){   //表示カテゴリがなければ全て表示
     foreach($cats as $value){
         $shows[]=$value[0];
     }
 }
-if(!in_array("ID",$shows)){
-    array_unshift($shows,"ID");
-}
 
 //新規登録
-if(isset($_POST['new_company'])){
-    //echo "新規企業登録<br>";    //checker
-    //sql文作成
+if(isset($_POST['new_row'])){
     $sql="insert into $ID (";
-    //ループ
-    foreach($shows as $value){
+    foreach($shows as $value){      //追加するカテゴリを設定
         $sql.=$value.",";
     }
     $sql=rtrim($sql,",");
     $sql.=") values (";
-    //ループ
     foreach($shows as $value){
-        $type=$pdo->query("select $value from $ID where ID=99999");
+        $type=$pdo->query("select $value from $ID where ID=99999"); //各カテゴリの形式を取得
         $type=$type->fetch();
-        if($type[0]!="image"){
+        if($type[0]!="image"){  //画像以外
             $sql.="'".$_POST["$value"]."',";
-        }else{  //画像登録
+        }else{  //画像
             $image_array=$_FILES["$value"];
             $tmp_name=$image_array['tmp_name'];
             $name=$image_array['name'];
             $path="./upfiles/$name";
             $check=move_uploaded_file($tmp_name,$path);
-            $time="./upfiles/".$ID.time().".jpg";
+            $file_name="./upfiles/".$ID.time().".jpg";
             if($check==1){
-                rename($path,$time);
-                $path=$time;
+                rename($path,$file_name);
+                $path=$file_name;
             }
             $sql.="'".$path."',";
         }
     }
     $sql=rtrim($sql,",");
     $sql.=")";
-    //echo "newSQL:".$sql;//checker
     $pdo->query($sql);
 }
 
@@ -104,7 +99,6 @@ foreach($_POST as $key => $value){
     }
 }
 if($del_ID!=NULL){
-    //echo "$del_ID の企業を削除";    //checker
     $sql="delete from $ID where ID=$del_ID";
     $pdo->query($sql);
     $i=$del_ID+1;
@@ -121,6 +115,7 @@ if($del_ID!=NULL){
         }
     }
 }
+
 //編集
 foreach($_POST as $key => $value){
     if(preg_match("/edit_[0-9]{1,}$/",$key)){
@@ -150,11 +145,11 @@ if(isset($_POST['edit_data'])){
                     $name=$image_array['name'];
                     $path="./upfiles/$name";
                     $check=move_uploaded_file($tmp_name,$path);
-                    $time="./upfiles/".$ID.time().".jpg";
+                    $file_name="./upfiles/".$ID.time().".jpg";
                     echo "check:".$check;
                     if($check==1){
-                        rename($path,$time);
-                        $path=$time;
+                        rename($path,$file_name);
+                        $path=$file_name;
                     }
                     $sql.="$value='".$path."',";
                 }
@@ -279,7 +274,7 @@ foreach($shows as $value){
 </tr>
 <form method="post" enctype="multipart/form-data">
 <tr>
-<td><input type="submit" name="new_company" value="" class="small_btn signup_btn"></td>
+<td><input type="submit" name="new_row" value="" class="small_btn signup_btn"></td>
 <?php   //新規登録
 foreach($shows as $value){
     echo "<th>";
