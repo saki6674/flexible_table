@@ -38,12 +38,12 @@ if($time<24*60*60):
 <h3>新規登録</h3>
 <form method="post" action="mission_6_complete.php">
 <!--仮登録項目表示-->
-名前<input type="text" value="<?php echo $name;?>" name="name" readonly><br>
-メールアドレス<input type="text" value="<?php echo $mail;?>" name="mail" readonly><br>
+名前<br><input type="text" value="<?php echo $name;?>" name="name" readonly><br>
+メールアドレス<br><input type="text" value="<?php echo $mail;?>" name="mail" readonly><br>
 <!--その他質問項目ユーザーID、パスワード-->
-ユーザーID<input type="text" name="ID" required><br>
-パスワード<input type="password" name="pass" required><br>
-パスワード(確認用)<input type="password" name="pass_check" required><br><br>
+ユーザーID<br><input type="text" name="ID" required><br>
+パスワード<br><input type="password" name="pass" required><br>
+パスワード(確認用)<br><input type="password" name="pass_check" required><br><br>
 <input type="submit" name="submit" value="" class="small_btn submit_btn">
 </form>
 

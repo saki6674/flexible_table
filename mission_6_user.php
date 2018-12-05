@@ -15,62 +15,9 @@ $user = 'ユーザー名';
 $password = 'パスワード';
 $pdo = new PDO($dsn,$user,$password);
 
-/*
-memo
-〜他ページとの関連〜
-①index.php
-    TOPページ。
-    ログイン(⑤mission_6_login.php)と新規登録(②mission_6_signup.php)への遷移。
-②mission_6_signup.php
-    名前とメールアドレスを入力し、認証メールを送信。
-    仮登録テーブル「pre」に登録。
-③mission_6_confirm.php
-    ②で届く認証メールからリンク。
-    tokenをgetで受け取り。
-    IDとパスワードの設定。
-④mission_6_complete.php
-    ③の設定完了画面。
-    ID被りや、パスワードの2回入力のチェック。
-    ユーザー一覧テーブル「user」への登録。
-    個人テーブル「personal_[ユーザーID]」の作成。
-    ログインページへリンク。
-⑤mission_6_login.php
-    IDとパスワードでログイン。
-    新規登録画面へのリンク。
-⑥mission_6_user.php
-    このファイル。
-    メイン画面。
-⑦mission_6_category.php
-    メイン画面から、各カテゴリ(カラム)の操作。
-    getでカテゴリ名取得。
-    カテゴリ(カラム)の名称変更・削除・移動・ソート。
-⑧mission_6_contact.php
-    問い合わせフォーム。
-    問い合わせ内容登録テーブル「advice」への登録。
-⑨mission_6_style.css
-    全体のスタイルシート。
-    
-    
-〜テーブルの設定〜
-①pre
-    新規登録画面で登録。
-    メールアドレス認証前。
-    create table pre (name text , mail text , date int , token text);
-②user
-    メールアドレス認証、ID/パスワードの設定済みのユーザー一覧。
-    CREATE TABLE user (ID text , name text , mail TEXT , hash_pass TEXT);
-    hash_passはsalt&pepperでhash化。
-③「personal_[ユーザーID]」
-    各ユーザーのデータ一覧。
-    デフォルトは以下で、その後メイン画面で操作可能。
-    CREATE TABLE personal_$ID (ID INT PRIMARY KEY , name text , comment TEXT , image TEXT);
-    imageはpathを保存。
-    ID=99999には、カラムの形式が格納されている。(textとtextareaを分類する為に使用)
-⑤advice
-    問い合わせ画面の内容を登録。
-    create table advice (ID text,content text);
-*/
-
+//定数設定
+$col_type=99999;
+$image_file="./upfiles/";
 
 //〜アカウント〜
 //ログアウト
@@ -82,13 +29,13 @@ if(isset($_POST['logout'])){
 
 //セッションからユーザーIDを取得
 session_start(array('cookie_lifetime' => 86400));
-if(!empty($_SESSION['ID'])){
+if(isset($_SESSION['ID'])){
     $ID='personal_'.$_SESSION['ID'];
 }
 
 //〜ページ遷移〜
 //ログアウト状態ならログインページへ
-if($ID== NULL){
+if(is_null($ID)){
     header("Location:mission_6_login.php");
 }
 
@@ -104,14 +51,14 @@ if(isset($_POST['add_cat'])){
     $type=$_POST['add_cat_type'];
     $sql="alter table $ID add $name text";
     $pdo->query($sql);
-    $pdo->query("update $ID set $name='$type' where ID=99999");
+    $pdo->query("update $ID set $name='$type' where ID=$col_type");
 }
 
 //表示カテゴリリスト作成
 $cats=$pdo->query("show columns from $ID");
 $cats=$cats->fetchAll();
 $shows=$_POST['show_cate'];
-if($shows==NULL){   //表示カテゴリがなければ全て表示
+if(empty($shows)){   //表示カテゴリがなければ全て表示
     foreach($cats as $value){
         $shows[]=$value[0];
     }
@@ -130,7 +77,7 @@ if(isset($_POST['new_row'])){
     $sql=rtrim($sql,",");
     $sql.=") values (";
     foreach($shows as $value){
-        $type=$pdo->query("select $value from $ID where ID=99999"); //各カテゴリの形式を取得
+        $type=$pdo->query("select $value from $ID where ID=$col_type"); //各カテゴリの形式を取得
         $type=$type->fetch();
         if($type[0]!="image"){  //画像以外
             $sql.="'".$_POST["$value"]."',";
@@ -138,9 +85,9 @@ if(isset($_POST['new_row'])){
             $image_array=$_FILES["$value"];
             $tmp_name=$image_array['tmp_name'];
             $name=$image_array['name'];
-            $path="./upfiles/$name";
+            $path=$image_file.$name;
             $check=move_uploaded_file($tmp_name,$path);
-            $file_name="./upfiles/".$ID.time().".jpg";
+            $file_name=$image_file.$ID.time().".jpg";
             if($check==1){
                 rename($path,$file_name);
                 $path=$file_name;
@@ -168,7 +115,7 @@ if($del_ID!=NULL){
     while($shift_ID>1){
         $sql=$pdo->query("select ID from $ID where ID=".$shift_ID);
         $sql=$sql->fetch();
-        if($sql==NULL){
+        if(is_null($sql)){
             break;
         }
         $sql="update $ID set ID=".--$shift_ID." where ID=".++$shift_ID;
@@ -190,31 +137,28 @@ if($edit_ID!=NULL){
 //編集データの受け取り、更新
 if(isset($_POST['edit_data'])){
     $sql="update $ID set ";
-    //ループ　A='A',B='B'
     foreach($shows as $value){
-        //ID=99999のカラム名$valueを取得
-        $type=$pdo->query("select $value from $ID where ID=99999"); //形式の取得
+        //ID=$col_typeのカラム名$valueを取得
+        $type=$pdo->query("select $value from $ID where ID=$col_type"); //形式の取得
         $type=$type->fetch();
         if($type[0]=="image"){  //画像の場合
-            if($_POST["$value"]!="delete"){ //画像を削除しない場合
-                if($_FILES["$value"]['error']==0){
-                    //画像登録
-                    $image_array=$_FILES["$value"];
-                    $tmp_name=$image_array['tmp_name'];
-                    $name=$image_array['name'];
-                    $path="./upfiles/$name";
-                    $check=move_uploaded_file($tmp_name,$path);
-                    $file_name="./upfiles/".$ID.time().".jpg";
-                    if($check==1){
-                        rename($path,$file_name);
-                        $path=$file_name;
-                    }
-                    $sql.="$value='".$path."',";
+            if($_POST["$value"]!="delete" && $_FILES["$value"]['error']==0){ //画像を削除せず画像エラーもない場合
+                //画像登録
+                $image_array=$_FILES["$value"];
+                $tmp_name=$image_array['tmp_name'];
+                $name=$image_array['name'];
+                $path=$image_file.$name;
+                $check=move_uploaded_file($tmp_name,$path);
+                $file_name=$image_file.$ID.time().".jpg";
+                if($check==1){
+                    rename($path,$file_name);
+                    $path=$file_name;
                 }
+                $sql.="$value='".$path."',";
             }else{  //画像を削除する場合
                 $sql.="$value='',";
             }
-        }elseif(!($value=="edit_data" || $value=="ID")){    //画像でない場合
+        }elseif($value!="ID"){    //画像でない場合
             $sql.=$value."='".$_POST["$value"]."',";
         }
     }
@@ -224,7 +168,7 @@ if(isset($_POST['edit_data'])){
 }
 
 //レコード取得
-if(empty($_SESSION['order'])){
+if(is_null($_SESSION['order'])){
     $_SESSION['order']="ID";
 }
 $order="order by ".$_SESSION['order'];
@@ -321,8 +265,8 @@ foreach($shows as $value){
 <?php   //新規登録
 foreach($shows as $value){
     echo "<th>";
-    //99999行に格納されている形式のリストを取得
-    $type=$pdo->query("select $value from $ID where ID=99999");
+    //$col_type行に格納されている形式のリストを取得
+    $type=$pdo->query("select $value from $ID where ID=$col_type");
     $type=$type->fetch();
     if($type[0]=="image"){  //画像の入力フォーム
         echo "<input type='file' name='$value'accept='image/*'>";
@@ -357,8 +301,8 @@ foreach($shows as $value){
     //変更前の値を取得
     $former_value=$pdo->query("select $value from $ID where ID=$edit_ID");
     $former_value=$former_value->fetch();
-    //99999行に格納されている形式のリストを取得
-    $type=$pdo->query("select $value from $ID where ID=99999");
+    //$col_type行に格納されている形式のリストを取得
+    $type=$pdo->query("select $value from $ID where ID=$col_type");
     $type=$type->fetch();
     //編集フォームの作成
     if($type[0]=="image"){  //形式が画像の場合
@@ -389,32 +333,28 @@ foreach($cells as $value){
         //編集削除ボタン
         echo "<tr><td><form method='post'><input type='submit' value='' class='small_btn edit_btn' name='edit_".$value['ID']."'><br><input type='submit' value='' class='small_btn delete_btn' name='delete_".$value['ID']."'></form></td>";
         foreach($shows as $cat){
-            //99999行に格納されている形式のリストを取得
-            $type=$pdo->query("select $cat from $ID where ID=99999");
+            //$col_type行に格納されている形式のリストを取得
+            $type=$pdo->query("select $cat from $ID where ID=$col_type");
             $type=$type->fetch();
             //各セルを表示
+            echo "<td>";
             if($type[0]=="image"){  //画像の場合
-                if($value[$cat]!="./upfiles/"){
-                    echo "<td><img src=".$value[$cat]."></td>";
-                }else{
-                    echo "<td></td>";
+                if($value[$cat]!=$image_file){   //画像がある場合
+                    echo "<img src=".$value[$cat].">";
                 }
             }elseif($type[0]=="datetime-local"){    //日付の場合
                 $datetime=explode("T",$value[$cat]);
-                echo "<td>";
                 foreach($datetime as $v){
                     echo $v." ";
                 }
-                echo "</td>";
             }elseif($type[0]=="textarea"){  //テキストエリアの場合
-                echo "<td>";
                 $text=$value[$cat];
                 $text=preg_replace("/\n/","<br>",$text);
                 echo $text;
-                echo "</td>";
             }else{  //その他
-                echo  "<td>".$value[$cat]."</td>";
+                echo  $value[$cat];
             }
+            echo "</td>";
         }
         echo "</tr>";
     }
