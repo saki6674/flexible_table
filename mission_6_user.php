@@ -88,10 +88,8 @@ if(isset($_POST['new_row'])){
             $path=$image_file.$name;
             $check=move_uploaded_file($tmp_name,$path);
             $file_name=$image_file.$ID.time().".jpg";
-            if($check==1){
-                rename($path,$file_name);
-                $path=$file_name;
-            }
+            rename($path,$file_name);
+            $path=$file_name;
             $sql.="'".$path."',";
         }
     }
@@ -137,7 +135,7 @@ if($edit_ID!=NULL){
 //編集データの受け取り、更新
 if(isset($_POST['edit_data'])){
     $sql="update $ID set ";
-    foreach($shows as $value){
+    foreach($shows as $value){  //表示する全てのカテゴリで
         //ID=$col_typeのカラム名$valueを取得
         $type=$pdo->query("select $value from $ID where ID=$col_type"); //形式の取得
         $type=$type->fetch();
@@ -148,12 +146,10 @@ if(isset($_POST['edit_data'])){
                 $tmp_name=$image_array['tmp_name'];
                 $name=$image_array['name'];
                 $path=$image_file.$name;
-                $check=move_uploaded_file($tmp_name,$path);
+                move_uploaded_file($tmp_name,$path);
                 $file_name=$image_file.$ID.time().".jpg";
-                if($check==1){
-                    rename($path,$file_name);
-                    $path=$file_name;
-                }
+                rename($path,$file_name);
+                $path=$file_name;
                 $sql.="$value='".$path."',";
             }else{  //画像を削除する場合
                 $sql.="$value='',";
