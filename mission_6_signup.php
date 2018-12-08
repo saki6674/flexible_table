@@ -55,6 +55,15 @@ if(isset($submit)){
     $sql->bindParam(":date",time(),PDO::PARAM_INT);
     $sql->bindParam(":token",$token,PDO::PARAM_STR);
     $sql->execute();
+    
+    //期限切れデータ削除
+    $pre=$pdo->query("select * from pre");
+    $pre=$pre->fetchALL();
+    foreach($pre as $value){
+        if(time()-$value['date']>=24*60*60){
+            $pdo->query("delete from pre where token='".$value['token']."'");
+        }
+    }
 
     //完了&注意事項表示
     echo "仮登録完了。24時間以内に本登録を行ってください。";

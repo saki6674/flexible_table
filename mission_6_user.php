@@ -115,7 +115,7 @@ if($del_ID!=NULL){
     while($shift_ID>1){
         $sql=$pdo->query("select ID from $ID where ID=".$shift_ID);
         $sql=$sql->fetch();
-        if(is_null($sql)){
+        if($sql==NULL){
             break;
         }
         $sql="update $ID set ID=".--$shift_ID." where ID=".++$shift_ID;
