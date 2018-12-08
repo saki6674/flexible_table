@@ -88,8 +88,10 @@ if(isset($_POST['new_row'])){
             $path=$image_file.$name;
             $check=move_uploaded_file($tmp_name,$path);
             $file_name=$image_file.$ID.time().".jpg";
-            rename($path,$file_name);
-            $path=$file_name;
+            if($check==1){
+                rename($path,$file_name);
+                $path=$file_name;
+            }
             $sql.="'".$path."',";
         }
     }
@@ -148,8 +150,10 @@ if(isset($_POST['edit_data'])){
                 $path=$image_file.$name;
                 move_uploaded_file($tmp_name,$path);
                 $file_name=$image_file.$ID.time().".jpg";
-                rename($path,$file_name);
-                $path=$file_name;
+                if($check==1){
+                    rename($path,$file_name);
+                    $path=$file_name;
+                }
                 $sql.="$value='".$path."',";
             }else{  //画像を削除する場合
                 $sql.="$value='',";
