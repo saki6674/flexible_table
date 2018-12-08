@@ -41,7 +41,7 @@
     メールアドレス認証、ID/パスワードの設定済みのユーザー一覧。
     CREATE TABLE user (ID text , name text , mail TEXT , hash_pass TEXT);
     hash_passはsalt&pepperでhash化。
-③「personal_[ユーザーID]」
+③personal_[ユーザーID]
     各ユーザーのデータ一覧。
     デフォルトは以下で、その後メイン画面で操作可能。
     CREATE TABLE personal_$ID (ID INT PRIMARY KEY , name text , comment TEXT , image TEXT);
