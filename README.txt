@@ -1,3 +1,6 @@
+〜動作環境〜
+PHP Version 5.2.4
+
 〜ページの関連性〜
 ①index.php
     TOPページ。
