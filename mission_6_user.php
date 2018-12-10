@@ -16,8 +16,8 @@ $password = 'パスワード';
 $pdo = new PDO($dsn,$user,$password);
 
 //定数設定
-$col_type=99999;
-$image_file="./upfiles/";
+define(COLUMN_TYPE_ID,99999);
+define(IMAGE_FILE,"./upfiles/");
 
 //〜アカウント〜
 //ログアウト
@@ -51,7 +51,7 @@ if(isset($_POST['add_cat'])){
     $type=$_POST['add_cat_type'];
     $sql="alter table $ID add $name text";
     $pdo->query($sql);
-    $pdo->query("update $ID set $name='$type' where ID=$col_type");
+    $pdo->query("update $ID set $name='$type' where ID=COLUMN_TYPE_ID");
 }
 
 //表示カテゴリリスト作成
@@ -77,7 +77,7 @@ if(isset($_POST['new_row'])){
     $sql=rtrim($sql,",");
     $sql.=") values (";
     foreach($shows as $value){
-        $type=$pdo->query("select $value from $ID where ID=$col_type"); //各カテゴリの形式を取得
+        $type=$pdo->query("select $value from $ID where ID=".COLUMN_TYPE_ID); //各カテゴリの形式を取得
         $type=$type->fetch();
         if($type[0]!="image"){  //画像以外
             $sql.="'".$_POST["$value"]."',";
@@ -85,9 +85,9 @@ if(isset($_POST['new_row'])){
             $image_array=$_FILES["$value"];
             $tmp_name=$image_array['tmp_name'];
             $name=$image_array['name'];
-            $path=$image_file.$name;
+            $path=IMAGE_FILE.$name;
             $check=move_uploaded_file($tmp_name,$path);
-            $file_name=$image_file.$ID.time().".jpg";
+            $file_name=IMAGE_FILE.$ID.time().".jpg";
             if($check==1){
                 rename($path,$file_name);
                 $path=$file_name;
@@ -138,8 +138,8 @@ if($edit_ID!=NULL){
 if(isset($_POST['edit_data'])){
     $sql="update $ID set ";
     foreach($shows as $value){  //表示する全てのカテゴリで
-        //ID=$col_typeのカラム名$valueを取得
-        $type=$pdo->query("select $value from $ID where ID=$col_type"); //形式の取得
+        //ID=COLUMN_TYPE_IDのカラム名$valueを取得
+        $type=$pdo->query("select $value from $ID where ID=".COLUMN_TYPE_ID); //形式の取得
         $type=$type->fetch();
         if($type[0]=="image"){  //画像の場合
             if($_POST["$value"]!="delete" && $_FILES["$value"]['error']==0){ //画像を削除せず画像エラーもない場合
@@ -147,9 +147,9 @@ if(isset($_POST['edit_data'])){
                 $image_array=$_FILES["$value"];
                 $tmp_name=$image_array['tmp_name'];
                 $name=$image_array['name'];
-                $path=$image_file.$name;
+                $path=IMAGE_FILE.$name;
                 move_uploaded_file($tmp_name,$path);
-                $file_name=$image_file.$ID.time().".jpg";
+                $file_name=IMAGE_FILE.$ID.time().".jpg";
                 if($check==1){
                     rename($path,$file_name);
                     $path=$file_name;
@@ -265,8 +265,8 @@ foreach($shows as $value){
 <?php   //新規登録
 foreach($shows as $value){
     echo "<th>";
-    //$col_type行に格納されている形式のリストを取得
-    $type=$pdo->query("select $value from $ID where ID=$col_type");
+    //COLUMN_TYPE_ID行に格納されている形式のリストを取得
+    $type=$pdo->query("select $value from $ID where ID=".COLUMN_TYPE_ID);
     $type=$type->fetch();
     if($type[0]=="image"){  //画像の入力フォーム
         echo "<input type='file' name='$value'accept='image/*'>";
@@ -301,8 +301,8 @@ foreach($shows as $value){
     //変更前の値を取得
     $former_value=$pdo->query("select $value from $ID where ID=$edit_ID");
     $former_value=$former_value->fetch();
-    //$col_type行に格納されている形式のリストを取得
-    $type=$pdo->query("select $value from $ID where ID=$col_type");
+    //COLUMN_TYPE_ID行に格納されている形式のリストを取得
+    $type=$pdo->query("select $value from $ID where ID=".COLUMN_TYPE_ID);
     $type=$type->fetch();
     //編集フォームの作成
     if($type[0]=="image"){  //形式が画像の場合
@@ -333,13 +333,13 @@ foreach($cells as $value){
         //編集削除ボタン
         echo "<tr><td><form method='post'><input type='submit' value='' class='small_btn edit_btn' name='edit_".$value['ID']."'><br><input type='submit' value='' class='small_btn delete_btn' name='delete_".$value['ID']."'></form></td>";
         foreach($shows as $cat){
-            //$col_type行に格納されている形式のリストを取得
-            $type=$pdo->query("select $cat from $ID where ID=$col_type");
+            //COLUMN_TYPE_ID行に格納されている形式のリストを取得
+            $type=$pdo->query("select $cat from $ID where ID=".COLUMN_TYPE_ID);
             $type=$type->fetch();
             //各セルを表示
             echo "<td>";
             if($type[0]=="image"){  //画像の場合
-                if($value[$cat]!=$image_file){   //画像がある場合
+                if($value[$cat]!=IMAGE_FILE){   //画像がある場合
                     echo "<img src=".$value[$cat].">";
                 }
             }elseif($type[0]=="datetime-local"){    //日付の場合
